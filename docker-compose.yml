@@ -1,0 +1,38 @@
+services:
+  postgres-db:
+    image: postgres:11-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=healenium
+      - POSTGRES_USER=healenium_user
+      - POSTGRES_PASSWORD=healenium_password
+    volumes:
+      - ./healenium-backend/db/sql:/docker-entrypoint-initdb.d
+    networks:
+      - healenium
+
+  healenium:
+    image: healenium/hlm-backend:3.3.0    # Changed to a verified version
+    ports:
+      - "7878:7878"
+    links:
+      - postgres-db
+    env_file: ./healenium.env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/healenium
+      - SPRING_DATASOURCE_USERNAME=healenium_user
+      - SPRING_DATASOURCE_PASSWORD=healenium_password
+    networks:
+      - healenium
+
+  selector-imitator:
+    image: healenium/hlm-selector-imitator:1.1
+    ports:
+      - "8000:8000"
+    networks:
+      - healenium
+
+networks:
+  healenium:
+    driver: bridge
